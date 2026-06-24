@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traza paso a paso — UsosDeCiclos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1F3EE; --paper-card:#FBFCFA;
+    --ink:#1C2B36; --ink-soft:#54636E;
+    --line:#D5D9D0; --line-strong:#B9BFB2;
+    --teal:#0E6E6B; --teal-deep:#0A4F4D;
+    --gold:#B98700; --gold-soft:#F4E8C7;
+    --good:#2C7F5C; --good-soft:#DBEFE3;
+    --bad:#C24A2A; --bad-soft:#F6E0D6;
+    --sol:#5A5FB0; --sol-soft:#E4E5F5;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:26px 18px 80px}
+
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);font-weight:500;margin:0 0 6px}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,5vw,38px);line-height:1.05;margin:0 0 10px;letter-spacing:-.01em}
+  .lede{color:var(--ink-soft);font-size:15.5px;max-width:64ch;margin:0}
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* ---- Cards plegables ---- */
+  .card{margin:24px 0 8px;background:var(--paper-card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .card-head{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none}
+  .card-head h2{font-family:var(--display);font-size:17px;margin:0;font-weight:600}
+  .card-head .chev{margin-left:auto;color:var(--ink-soft);font-family:var(--mono);font-size:13px}
+  .card.closed .card-body{display:none}
+
+  .explain-body{padding:0 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .statement{grid-column:1/-1;font-family:var(--mono);font-size:13px;color:var(--teal-deep);background:#EAF1EF;border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:11px 14px;white-space:pre-wrap}
+  .explain-body p.prose{margin:0 0 10px;font-size:14.5px;color:var(--ink)}
+  .explain-body p.prose b{font-weight:600}
+  .keyidea{font-size:13.5px;color:var(--ink-soft);margin:8px 0 0;padding-left:12px;border-left:2px solid var(--line-strong)}
+  .keyidea b{color:var(--ink)}
+  .keyidea.reset{border-color:var(--gold)} .keyidea.acc{border-color:var(--teal)} .keyidea.trick{border-color:var(--sol)}
+  code.k{font-family:var(--mono);font-size:12.5px;background:#EBEDE7;padding:1px 5px;border-radius:4px;color:var(--teal-deep)}
+
+  figure.diagram{margin:0}
+  figure.diagram svg{width:100%;height:auto;display:block}
+  figcaption{font-size:12.5px;color:var(--ink-soft);text-align:center;margin-top:6px}
+
+  .code{grid-column:1/-1;font-family:var(--mono);font-size:12.5px;background:#13212B;color:#D8E2E6;border-radius:10px;padding:12px 0;overflow-x:auto}
+  .codeline{display:flex;align-items:baseline;padding:1.5px 14px;white-space:pre;transition:background .12s}
+  .codeline .ln{color:#5C7079;width:22px;text-align:right;margin-right:14px;flex:none;font-size:11.5px}
+  .codeline .tx{flex:1}
+  .codeline.outer .tx{color:#6FD6CF} .codeline.inner .tx{color:#F0CE72}
+  .codeline.wrapl .tx{color:#8aa0a8}
+  .codeline.hot{background:#27414C}
+  .codeline.hot .ln{color:#9FE6DF}
+  .legend{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:4px 18px;margin-top:4px;font-size:13px}
+  .legend div{padding:3px 0;border-bottom:1px dotted var(--line)}
+  .legend code{font-family:var(--mono);color:var(--teal-deep);font-weight:500;font-size:12.5px}
+  .legend b{color:var(--gold)}
+
+  /* comparación de ciclos */
+  .compare-body{padding:0 18px 18px}
+  .compare-note{font-size:14px;color:var(--ink-soft);margin:0 0 14px}
+  .compare-note b{color:var(--ink)}
+  .compare-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .lc h4{font-family:var(--display);font-size:13.5px;margin:0 0 6px;display:flex;align-items:center;gap:7px}
+  .lc h4 .dot{width:8px;height:8px;border-radius:50%}
+  .lc .minic{font-family:var(--mono);font-size:11.5px;background:#13212B;color:#D8E2E6;border-radius:8px;padding:10px 11px;white-space:pre;overflow-x:auto;line-height:1.55}
+  .lc .when{font-size:12px;color:var(--ink-soft);margin:6px 0 0}
+
+  /* ---- Top bar / tabs ---- */
+  .topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:26px 0 14px;justify-content:space-between}
+  .tabs{display:flex;gap:6px;background:var(--paper-card);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .tab{font-family:var(--display);font-weight:600;font-size:14px;border:0;background:transparent;color:var(--ink-soft);padding:8px 16px;border-radius:999px;cursor:pointer;transition:.15s}
+  .tab[aria-selected="true"]{background:var(--teal);color:#fff}
+  .tab:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .meters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .score{font-family:var(--mono);font-size:13px;color:var(--ink-soft);background:var(--paper-card);border:1px solid var(--line);padding:7px 12px;border-radius:999px;white-space:nowrap}
+  .score b{color:var(--teal-deep);font-weight:700}
+  .btn-ghost{font-family:var(--display);font-weight:600;font-size:13px;background:transparent;border:1px solid var(--line-strong);color:var(--ink-soft);padding:8px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink)}
+  .btn-ghost:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  .case{display:none} .case.active{display:block}
+  .case-intro{font-family:var(--mono);font-size:13px;color:var(--ink-soft);background:var(--paper-card);border:1px dashed var(--line-strong);border-radius:var(--radius);padding:11px 14px;margin:0 0 20px}
+  .case-intro b{color:var(--ink)} .case-intro .nm{color:var(--teal-deep);font-weight:700}
+
+  /* ---- Blocks ---- */
+  .block{background:var(--paper-card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;margin-bottom:18px;box-shadow:0 1px 0 rgba(28,43,54,.03)}
+  .block-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .pill{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.04em;background:var(--teal);color:#fff;padding:4px 9px;border-radius:6px}
+  .block-head h3{font-family:var(--display);font-size:17px;font-weight:600;margin:0}
+  .block-head .tag{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;text-align:center;padding:6px 4px 8px;border-bottom:2px solid var(--line-strong)}
+  thead th.lbl{text-align:left;padding-left:2px}
+  tbody td{border-bottom:1px solid var(--line);padding:5px 4px;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  td.lbl{font-size:13.5px;color:var(--ink);padding-left:2px;line-height:1.35}
+  td.lbl code{font-family:var(--mono);font-size:12.5px;background:#EBEDE7;padding:1px 5px;border-radius:4px;color:var(--teal-deep)}
+  .lnbadge{display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:5px;padding:1px 6px;margin-top:4px;cursor:pointer;transition:.12s}
+  .lnbadge:hover{border-color:var(--teal);color:var(--teal)}
+  td.cell{text-align:center;width:78px}
+  input.v{width:62px;height:34px;text-align:center;font-family:var(--mono);font-size:15px;font-weight:500;color:var(--ink);background:#fff;border:1.5px solid var(--line-strong);border-radius:7px;transition:.12s}
+  input.v:focus{outline:0;border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,110,107,.15)}
+  input.v.changed{border-left:3px solid var(--gold)}
+  input.v.locked{background:#EFF1EC;color:var(--ink-soft);border-style:dashed;border-color:var(--line)}
+  input.v.ok{background:var(--good-soft);border-color:var(--good);color:#1f5f43}
+  input.v.no{background:var(--bad-soft);border-color:var(--bad);color:#8f3318}
+  input.v.sol{background:var(--sol-soft);border-color:var(--sol);color:#3c3f86}
+
+  .block-foot{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:13px}
+  .btn{font-family:var(--display);font-weight:600;font-size:13.5px;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--teal);color:#fff} .btn-primary:hover{background:var(--teal-deep)}
+  .btn-soft{background:#E7EAE4;color:var(--ink)} .btn-soft:hover{background:#DCE0D8}
+  .btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .verdict{font-family:var(--mono);font-size:13px;margin-left:2px;opacity:0;transition:.2s}
+  .verdict.show{opacity:1} .verdict.win{color:var(--good)} .verdict.part{color:var(--bad)}
+
+  .final{border-color:var(--teal);background:linear-gradient(180deg,#fff,#F4F8F6)}
+  .reflect{margin-top:24px}
+  .reflect h2{font-family:var(--display);font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:9px}
+  .reflect h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .q{background:var(--paper-card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:11px}
+  .q p.qt{margin:0;font-weight:600;font-size:14.5px}
+  .q p.qt code{font-family:var(--mono);font-size:13px;background:#EBEDE7;padding:1px 5px;border-radius:4px;color:var(--teal-deep)}
+  .q .ans{margin-top:10px;font-size:14px;color:var(--ink-soft);border-left:3px solid var(--teal);padding-left:12px;display:none}
+  .q .ans.show{display:block} .q .ans b{color:var(--ink)}
+  .q .ans code{font-family:var(--mono);font-size:12.5px;background:#EBEDE7;padding:1px 5px;border-radius:4px;color:var(--teal-deep)}
+  .reveal{margin-top:10px;font-family:var(--display);font-weight:600;font-size:13px;background:transparent;border:1px solid var(--line-strong);color:var(--ink-soft);padding:6px 13px;border-radius:7px;cursor:pointer}
+  .reveal:hover{border-color:var(--teal);color:var(--teal)}
+
+  footer{margin-top:30px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+
+  @media (max-width:680px){
+    .explain-body{grid-template-columns:1fr}
+    .compare-cols{grid-template-columns:1fr}
+    td.cell{width:auto} input.v{width:52px;font-size:14px}
+    td.lbl{font-size:12.5px}
+    .topbar{flex-direction:column;align-items:stretch}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Algoritmo UsosDeCiclos · ciclos anidados</p>
+    <h1>Traza paso a paso</h1>
+    <p class="lede">Tú eres la computadora. Ejecutas una instrucción, anotas qué cambió y pasas a la siguiente. <b>Una fila por cada cambio.</b> Si una variable no cambió en esa fila, repites el valor que traía.</p>
+  </header>
+
+  <!-- ====== EXPLICACIÓN ====== -->
+  <section class="card" id="explain">
+    <div class="card-head" id="explainHead" role="button" tabindex="0" aria-expanded="true">
+      <h2>¿Qué hace este programa?</h2>
+      <span class="chev" id="chev">ocultar ▲</span>
+    </div>
+    <div class="card-body explain-body">
+      <p class="statement">// Calcula el promedio de 'cantEst' estudiantes, con 'cantNotas' notas cada uno.
+// El núcleo son dos ciclos repetir…hasta que, uno dentro del otro.</p>
+
+      <div>
+        <p class="prose">El corazón del programa son <b>dos ciclos anidados</b>. El de afuera avanza <b>estudiante por estudiante</b> (se repite <code class="k">cantEst</code> veces). El de adentro avanza <b>nota por nota</b> de ese estudiante (se repite <code class="k">cantNotas</code> veces).</p>
+        <p class="keyidea reset"><b>Por qué se reinician <code class="k">promedioN</code> y <code class="k">j</code>:</b> están <b>dentro</b> del ciclo externo, así que vuelven a 0 al empezar cada estudiante (líneas 19).</p>
+        <p class="keyidea acc"><b>Por qué <code class="k">promedioE</code> no se reinicia:</b> se pone en 0 <b>una sola vez, antes</b> del ciclo (línea 15). Por eso conserva lo acumulado de todos.</p>
+        <p class="keyidea trick"><b>Truco del algoritmo:</b> divide entre <code class="k">j</code> y entre <code class="k">i</code> porque, al salir de cada ciclo, <code class="k">j</code> vale cuántas notas hubo y <code class="k">i</code> cuántos estudiantes hubo.</p>
+      </div>
+
+      <figure class="diagram" aria-label="Diagrama de los ciclos anidados">
+        <svg viewBox="0 0 620 420" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+          <rect x="20" y="20" width="580" height="384" rx="14" fill="#FBFCFA" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="38" y="44" font-size="12" letter-spacing="1" fill="var(--ink-soft)">PROGRAMA · pasa una sola vez</text>
+          <text x="40" y="72" font-size="14" fill="var(--ink)">promedioE &lt;- 0</text>
+
+          <rect x="46" y="90" width="528" height="248" rx="12" fill="#F1F8F6" stroke="var(--teal)" stroke-width="1.8"/>
+          <text x="64" y="114" font-size="12" letter-spacing="1" fill="var(--teal-deep)">POR CADA ESTUDIANTE · repetir cantEst veces  (i)  ↻</text>
+          <text x="66" y="142" font-size="13" fill="var(--teal-deep)">i &lt;- i+1   ·   promedioN &lt;- 0   ·   j &lt;- 0   ← se reinician</text>
+
+          <rect x="74" y="158" width="472" height="118" rx="10" fill="#FCF6E1" stroke="var(--gold)" stroke-width="1.8"/>
+          <text x="92" y="182" font-size="12" letter-spacing="1" fill="#7a5a00">POR CADA NOTA · repetir cantNotas veces  (j)  ↻</text>
+          <text x="94" y="210" font-size="14" fill="#5e4600">j &lt;- j+1</text>
+          <text x="94" y="234" font-size="14" fill="#5e4600">leer nota</text>
+          <text x="94" y="258" font-size="14" fill="#5e4600">promedioN &lt;- promedioN + nota</text>
+
+          <text x="66" y="304" font-size="13" fill="var(--teal-deep)">promedioN ÷ j   ·   promedioE &lt;- promedioE + promedioN</text>
+          <text x="40" y="388" font-size="14" fill="var(--ink)">promedioE ÷ i   →   mostrar resultado</text>
+        </svg>
+        <figcaption>Mientras más adentro está una variable, más veces se ejecuta y se reinicia.</figcaption>
+      </figure>
+
+      <div class="code" id="code"></div>
+
+      <div class="legend">
+        <div><code>cantEst</code> · cuántos estudiantes hay</div>
+        <div><code>cantNotas</code> · cuántas notas tiene cada uno</div>
+        <div><code>i</code> · estudiante actual (ciclo externo)</div>
+        <div><code>j</code> · nota actual (ciclo interno) — <b>se reinicia</b></div>
+        <div><code>nota</code> · la nota que se acaba de leer</div>
+        <div><code>promedioN</code> · de UN estudiante — <b>se reinicia</b></div>
+        <div><code>promedioE</code> · acumula a TODOS — no se reinicia</div>
+        <div><code>resp</code> · s/n para repetir el programa</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== COMPARACIÓN DE CICLOS ====== -->
+  <section class="card closed" id="compare">
+    <div class="card-head" id="compareHead" role="button" tabindex="0" aria-expanded="false">
+      <h2>El mismo ciclo interno, en 3 formas</h2>
+      <span class="chev" id="chevC">mostrar ▼</span>
+    </div>
+    <div class="card-body compare-body">
+      <p class="compare-note">El algoritmo se llama <b>UsosDeCiclos</b> y su comentario dice que usa <b>repetir, para y mientras</b>… pero en realidad lo implementó todo con <b>repetir…hasta que</b>. Estas tres versiones del ciclo de notas hacen exactamente lo mismo:</p>
+      <div class="compare-cols">
+        <div class="lc">
+          <h4><span class="dot" style="background:var(--gold)"></span>repetir (el original)</h4>
+          <div class="minic">j &lt;- 0
+repetir
+   j &lt;- j+1
+   leer nota
+   promedioN &lt;- promedioN+nota
+hasta que (j &gt;= cantNotas)</div>
+          <p class="when">Revisa la condición <b>al final</b>: el cuerpo siempre corre al menos una vez.</p>
+        </div>
+        <div class="lc">
+          <h4><span class="dot" style="background:var(--teal)"></span>para</h4>
+          <div class="minic">promedioN &lt;- 0
+Para j&lt;-1 hasta cantNotas hacer
+   leer nota
+   promedioN &lt;- promedioN+nota
+FinPara</div>
+          <p class="when">El contador <b>j</b> sube solo. Ideal cuando sabes cuántas vueltas serán.</p>
+        </div>
+        <div class="lc">
+          <h4><span class="dot" style="background:var(--sol)"></span>mientras</h4>
+          <div class="minic">j &lt;- 0
+Mientras (j &lt; cantNotas) hacer
+   j &lt;- j+1
+   leer nota
+   promedioN &lt;- promedioN+nota
+FinMientras</div>
+          <p class="when">Revisa la condición <b>al principio</b>: si fuera 0, no entraría nunca.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== PRÁCTICA ====== -->
+  <div class="topbar">
+    <div class="tabs" role="tablist" aria-label="Casos">
+      <button class="tab" role="tab" aria-selected="true" data-case="c1">Caso 1</button>
+      <button class="tab" role="tab" aria-selected="false" data-case="c2">Caso 2</button>
+    </div>
+    <div class="meters">
+      <span class="score" id="score">Correctas: <b>0</b> / 0</span>
+      <button class="btn-ghost" id="resetAll">Reiniciar</button>
+    </div>
+  </div>
+
+  <main id="cases"></main>
+  <footer>Pulsa el número de línea de cada paso para verlo en el algoritmo. Los valores no se guardan al cerrar.</footer>
+</div>
+
+<script>
+/* ---------- Algoritmo real (líneas numeradas) ---------- */
+const PSEUDO=[
+ {n:1,  t:"Algoritmo UsosDeCiclos"},
+ {n:2,  t:"definir resp como caracter"},
+ {n:3,  t:"definir nota, promedioN, promedioE como real"},
+ {n:4,  t:"definir cantEst, cantNotas, i, j como entero"},
+ {n:5,  t:'Escribir \"CICLO REPETIR\"'},
+ {n:6,  t:"REPETIR                         // PRINCIPAL", cls:"wrapl"},
+ {n:7,  t:"    repetir", cls:"wrapl"},
+ {n:8,  t:'        Escribir \"\u00bfCu\u00e1ntos estudiantes?\"', cls:"wrapl"},
+ {n:9,  t:"        leer cantEst", cls:"wrapl"},
+ {n:10, t:"    hasta que (cantEst > 0)", cls:"wrapl"},
+ {n:11, t:"    repetir", cls:"wrapl"},
+ {n:12, t:'        Escribir \"\u00bfCu\u00e1ntas notas?\"', cls:"wrapl"},
+ {n:13, t:"        leer cantNotas", cls:"wrapl"},
+ {n:14, t:"    hasta que (cantNotas > 0)", cls:"wrapl"},
+ {n:15, t:"    i <- 0;  promedioE <- 0"},
+ {n:16, t:"    repetir                     // por estudiante", cls:"outer"},
+ {n:17, t:"        i <- i + 1"},
+ {n:18, t:'        Escribir \"Notas del estudiante \", i'},
+ {n:19, t:"        j <- 0;  promedioN <- 0"},
+ {n:20, t:"        repetir                 // por nota", cls:"inner"},
+ {n:21, t:"            j <- j + 1"},
+ {n:22, t:'            Escribir \"Ingrese la nota \", j'},
+ {n:23, t:"            leer nota"},
+ {n:24, t:"            promedioN <- promedioN + nota"},
+ {n:25, t:"        hasta que (j >= cantNotas)", cls:"inner"},
+ {n:26, t:"        promedioN <- promedioN / j"},
+ {n:27, t:'        Escribir \"Promedio del estudiante \", i, promedioN'},
+ {n:28, t:"        promedioE <- promedioE + promedioN"},
+ {n:29, t:"    hasta que (i >= cantEst)", cls:"outer"},
+ {n:30, t:"    promedioE <- promedioE / i"},
+ {n:31, t:'    Escribir \"Promedio de todos: \", promedioE'},
+ {n:32, t:"    repetir                     // validar s/n", cls:"wrapl"},
+ {n:33, t:'        Escribir \"\u00bfRepetir el programa [s/n]?\"', cls:"wrapl"},
+ {n:34, t:"        leer resp", cls:"wrapl"},
+ {n:35, t:"        resp <- minusculas(resp)", cls:"wrapl"},
+ {n:36, t:"    hasta que (resp = 'n' o resp = 's')", cls:"wrapl"},
+ {n:37, t:"HASTA QUE (resp = 'n')          // PRINCIPAL", cls:"wrapl"},
+ {n:38, t:'Escribir \"GRACIAS POR USAR ESTE PROGRAMA.. A BAJARSE DE LA \ud83d\udc0e\"'},
+ {n:39, t:"FinAlgoritmo"},
+];
+const codeBox=document.getElementById("code");
+PSEUDO.forEach(l=>{
+  const row=document.createElement("div");
+  row.className="codeline"+(l.cls?(" "+l.cls):"");
+  row.dataset.line=l.n;
+  row.innerHTML='<span class="ln">'+l.n+'</span><span class="tx">'+l.t.replace(/</g,"&lt;")+'</span>';
+  codeBox.appendChild(row);
+});
+function clearHot(){document.querySelectorAll(".codeline.hot").forEach(e=>e.classList.remove("hot"));}
+function highlight(lines,scroll){
+  clearHot();
+  lines.forEach(n=>{const el=document.querySelector('.codeline[data-line="'+n+'"]');if(el)el.classList.add("hot");});
+  if(scroll){
+    if(document.getElementById("explain").classList.contains("closed")) toggleExplain();
+    const first=document.querySelector(".codeline.hot");if(first)first.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+}
+
+/* ---------- Modelo de la traza ---------- */
+const DASH="\u2014";
+function mk(label,j,nota,pN,pE,changed,lines){return {label,v:{j,nota,pN,pE},changed,lines};}
+const START_L=[17,19], NOTE_L=[21,22,23,24], EXIT_L=[25], AVG_L=[26], ACC_L=[28];
+
+const DATA={
+  c1:{
+    intro:'3 estudiantes \u00b7 2 notas cada uno \u2014 aqu\u00ed <span class="nm">cantEst = 3, cantNotas = 2</span> \u00b7 E1: <b>10, 14</b> \u00b7 E2: <b>16, 20</b> \u00b7 E3: <b>12, 18</b>',
+    blocks:[
+      {pill:"i = 1",title:"Estudiante 1",tag:"notas 10, 14",rows:[
+        mk("Empieza el estudiante: <code>j\u21900</code>, <code>promedioN\u21900</code>",0,DASH,0,0,["j","pN"],START_L),
+        mk("1\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",1,10,10,0,["j","nota","pN"],NOTE_L),
+        mk("2\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",2,14,24,0,["j","nota","pN"],NOTE_L),
+        mk("Se cumple <code>j&gt;=cantNotas</code> \u2192 salgo del interno",2,14,24,0,[],EXIT_L),
+        mk("Saco el promedio: <code>promedioN \u00f7 j</code>",2,14,12,0,["pN"],AVG_L),
+        mk("Lo acumulo al total: <code>promedioE+=promedioN</code>",2,14,12,12,["pE"],ACC_L),
+      ]},
+      {pill:"i = 2",title:"Estudiante 2",tag:"notas 16, 20",rows:[
+        mk("Empieza el estudiante: <code>j\u21900</code>, <code>promedioN\u21900</code>",0,DASH,0,12,["j","pN"],START_L),
+        mk("1\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",1,16,16,12,["j","nota","pN"],NOTE_L),
+        mk("2\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",2,20,36,12,["j","nota","pN"],NOTE_L),
+        mk("Se cumple <code>j&gt;=cantNotas</code> \u2192 salgo del interno",2,20,36,12,[],EXIT_L),
+        mk("Saco el promedio: <code>promedioN \u00f7 j</code>",2,20,18,12,["pN"],AVG_L),
+        mk("Lo acumulo al total: <code>promedioE+=promedioN</code>",2,20,18,30,["pE"],ACC_L),
+      ]},
+      {pill:"i = 3",title:"Estudiante 3",tag:"notas 12, 18",rows:[
+        mk("Empieza el estudiante: <code>j\u21900</code>, <code>promedioN\u21900</code>",0,DASH,0,30,["j","pN"],START_L),
+        mk("1\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",1,12,12,30,["j","nota","pN"],NOTE_L),
+        mk("2\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",2,18,30,30,["j","nota","pN"],NOTE_L),
+        mk("Se cumple <code>j&gt;=cantNotas</code> \u2192 salgo del interno",2,18,30,30,[],EXIT_L),
+        mk("Saco el promedio: <code>promedioN \u00f7 j</code>",2,18,15,30,["pN"],AVG_L),
+        mk("Lo acumulo al total: <code>promedioE+=promedioN</code>",2,18,15,45,["pE"],ACC_L),
+      ]},
+    ],
+    finalLabel:"Saco el promedio general: <code>promedioE \u00f7 i</code>  (i lleg\u00f3 a 3)",
+    finalVal:15, finalLines:[30],
+    reflect:[
+      {q:"\u00bfQu\u00e9 hizo <code>j</code> en los tres bloques?",
+       a:"En cada bloque <b>j</b> volvi\u00f3 a empezar en 0 y subi\u00f3 0 \u2192 1 \u2192 2. Se reinici\u00f3 con cada estudiante porque <code>j \u2190 0</code> est\u00e1 dentro del ciclo externo (l\u00ednea 19)."},
+      {q:"\u00bfPor qu\u00e9 <code>promedioN</code> se reinici\u00f3 pero <code>promedioE</code> no?",
+       a:"<b>promedioN \u2190 0</b> est\u00e1 dentro del ciclo (l\u00ednea 19), as\u00ed que arranca de cero con cada estudiante. <b>promedioE \u2190 0</b> est\u00e1 fuera (l\u00ednea 15), se ejecuta una sola vez; por eso acumul\u00f3 0 \u2192 12 \u2192 30 \u2192 45."},
+      {q:"\u00bfPor qu\u00e9 el programa divide entre <code>j</code> y entre <code>i</code>?",
+       a:"Porque al salir de cada <code>repetir\u2026hasta que</code>, esos contadores quedan con el total: <b>j = cantNotas</b> e <b>i = cantEst</b>. Dividir entre j (l\u00ednea 26) e i (l\u00ednea 30) da el mismo resultado que dividir entre cantNotas y cantEst."},
+    ]},
+  c2:{
+    intro:'2 estudiantes \u00b7 <b>3 notas</b> cada uno \u2014 aqu\u00ed <span class="nm">cantEst = 2, cantNotas = 3</span> \u00b7 E1: <b>12, 15, 9</b> \u00b7 E2: <b>18, 14, 16</b>',
+    blocks:[
+      {pill:"i = 1",title:"Estudiante 1",tag:"notas 12, 15, 9",rows:[
+        mk("Empieza el estudiante: <code>j\u21900</code>, <code>promedioN\u21900</code>",0,DASH,0,0,["j","pN"],START_L),
+        mk("1\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",1,12,12,0,["j","nota","pN"],NOTE_L),
+        mk("2\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",2,15,27,0,["j","nota","pN"],NOTE_L),
+        mk("3\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",3,9,36,0,["j","nota","pN"],NOTE_L),
+        mk("Se cumple <code>j&gt;=cantNotas</code> \u2192 salgo del interno",3,9,36,0,[],EXIT_L),
+        mk("Saco el promedio: <code>promedioN \u00f7 j</code>",3,9,12,0,["pN"],AVG_L),
+        mk("Lo acumulo al total: <code>promedioE+=promedioN</code>",3,9,12,12,["pE"],ACC_L),
+      ]},
+      {pill:"i = 2",title:"Estudiante 2",tag:"notas 18, 14, 16",rows:[
+        mk("Empieza el estudiante: <code>j\u21900</code>, <code>promedioN\u21900</code>",0,DASH,0,12,["j","pN"],START_L),
+        mk("1\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",1,18,18,12,["j","nota","pN"],NOTE_L),
+        mk("2\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",2,14,32,12,["j","nota","pN"],NOTE_L),
+        mk("3\u00aa nota: <code>j\u2190j+1</code>, leo y sumo",3,16,48,12,["j","nota","pN"],NOTE_L),
+        mk("Se cumple <code>j&gt;=cantNotas</code> \u2192 salgo del interno",3,16,48,12,[],EXIT_L),
+        mk("Saco el promedio: <code>promedioN \u00f7 j</code>",3,16,16,12,["pN"],AVG_L),
+        mk("Lo acumulo al total: <code>promedioE+=promedioN</code>",3,16,16,28,["pE"],ACC_L),
+      ]},
+    ],
+    finalLabel:"Saco el promedio general: <code>promedioE \u00f7 i</code>  (i lleg\u00f3 a 2)",
+    finalVal:14, finalLines:[30],
+    reflect:[
+      {q:"\u00bfHasta cu\u00e1nto lleg\u00f3 <code>j</code> ahora, y por qu\u00e9?",
+       a:"Lleg\u00f3 hasta <b>3</b> (0 \u2192 1 \u2192 2 \u2192 3) en ambos bloques, porque <code>cantNotas = 3</code>. El interno se repite hasta que <code>j >= cantNotas</code> (l\u00ednea 25), as\u00ed que da una vuelta m\u00e1s que en el Caso 1."},
+      {q:"\u00bfQu\u00e9 fue distinto frente al Caso 1?",
+       a:"El algoritmo es el mismo; solo cambiaron los datos. Como <code>cantNotas</code> pas\u00f3 de 2 a 3, el ciclo interno dio una vuelta m\u00e1s y al final se dividi\u00f3 entre 3. Si entendiste que <b>j</b> cuenta notas, esto sale solo."},
+      {q:"<code>repetir\u2026hasta que</code> revisa la condici\u00f3n al final. \u00bfPor qu\u00e9 importa?",
+       a:"Porque el cuerpo <b>siempre se ejecuta al menos una vez</b> antes de revisar. Por eso, aunque pongas cantNotas = 1, igual lee una nota. Un <code>Mientras</code> (que revisa al inicio) podr\u00eda no entrar nunca."},
+    ]},
+};
+
+const COLS=["j","nota","pN","pE"];
+const root=document.getElementById("cases");
+
+function badgeText(lines){
+  if(lines.length===1) return "l\u00ednea "+lines[0];
+  const min=Math.min(...lines),max=Math.max(...lines);
+  if(max-min+1===lines.length) return "l\u00edneas "+min+"\u2013"+max;
+  return "l\u00edneas "+lines.join(", ");
+}
+function inputCell(col,row){
+  const td=document.createElement("td"); td.className="cell";
+  const inp=document.createElement("input");
+  inp.className="v"; inp.type="text"; inp.inputMode="numeric"; inp.autocomplete="off";
+  inp.dataset.expected=row.v[col];
+  inp.setAttribute("aria-label",col);
+  if(row.v[col]===DASH){inp.value=DASH;inp.readOnly=true;inp.classList.add("locked");inp.dataset.locked="1";}
+  else if(row.changed.includes(col)) inp.classList.add("changed");
+  inp.addEventListener("focus",()=>highlight(row.lines,false));
+  td.appendChild(inp); return td;
+}
+function buildBlock(block){
+  const sec=document.createElement("section"); sec.className="block";
+  const head=document.createElement("div"); head.className="block-head";
+  head.innerHTML='<span class="pill">'+block.pill+'</span><h3>'+block.title+'</h3><span class="tag">'+block.tag+'</span>';
+  sec.appendChild(head);
+  const table=document.createElement("table");
+  table.innerHTML='<thead><tr><th class="lbl">Qu\u00e9 se ejecuta</th><th>j</th><th>nota</th><th>promedioN</th><th>promedioE</th></tr></thead>';
+  const tb=document.createElement("tbody");
+  block.rows.forEach(row=>{
+    const tr=document.createElement("tr");
+    const lab=document.createElement("td"); lab.className="lbl";
+    lab.innerHTML=row.label+'<br><span class="lnbadge">'+badgeText(row.lines)+'</span>';
+    lab.querySelector(".lnbadge").addEventListener("click",()=>highlight(row.lines,true));
+    tr.appendChild(lab);
+    COLS.forEach(col=>tr.appendChild(inputCell(col,row)));
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb); sec.appendChild(table);
+  const foot=document.createElement("div"); foot.className="block-foot";
+  foot.innerHTML='<button class="btn btn-primary" data-act="check">Verificar bloque</button><button class="btn btn-soft" data-act="sol">Ver soluci\u00f3n</button><span class="verdict"></span>';
+  sec.appendChild(foot);
+  foot.querySelector('[data-act="check"]').addEventListener("click",()=>checkScope(table,foot.querySelector(".verdict")));
+  foot.querySelector('[data-act="sol"]').addEventListener("click",()=>solveScope(table,foot.querySelector(".verdict")));
+  return sec;
+}
+function buildFinal(c){
+  const sec=document.createElement("section"); sec.className="block final";
+  sec.innerHTML='<div class="block-head"><span class="pill">fin</span><h3>Promedio general</h3></div>';
+  const table=document.createElement("table");
+  table.innerHTML='<thead><tr><th class="lbl">Qu\u00e9 se ejecuta</th><th>promedioE</th></tr></thead>';
+  const tb=document.createElement("tbody"); const tr=document.createElement("tr");
+  const lab=document.createElement("td"); lab.className="lbl";
+  lab.innerHTML=c.finalLabel+'<br><span class="lnbadge">'+badgeText(c.finalLines)+'</span>';
+  lab.querySelector(".lnbadge").addEventListener("click",()=>highlight(c.finalLines,true));
+  const td=document.createElement("td"); td.className="cell";
+  const inp=document.createElement("input"); inp.className="v changed"; inp.type="text"; inp.inputMode="numeric"; inp.autocomplete="off";
+  inp.dataset.expected=c.finalVal; inp.setAttribute("aria-label","promedioE final");
+  inp.addEventListener("focus",()=>highlight(c.finalLines,false));
+  td.appendChild(inp); tr.appendChild(lab); tr.appendChild(td); tb.appendChild(tr);
+  table.appendChild(tb); sec.appendChild(table);
+  const foot=document.createElement("div"); foot.className="block-foot";
+  foot.innerHTML='<button class="btn btn-primary" data-act="check">Verificar</button><button class="btn btn-soft" data-act="sol">Ver soluci\u00f3n</button><span class="verdict"></span>';
+  sec.appendChild(foot);
+  foot.querySelector('[data-act="check"]').addEventListener("click",()=>checkScope(table,foot.querySelector(".verdict")));
+  foot.querySelector('[data-act="sol"]').addEventListener("click",()=>solveScope(table,foot.querySelector(".verdict")));
+  return sec;
+}
+function buildReflect(c){
+  const wrap=document.createElement("div"); wrap.className="reflect";
+  wrap.innerHTML='<h2><span class="dot"></span>Para responder solo/a</h2>';
+  c.reflect.forEach(item=>{
+    const q=document.createElement("div"); q.className="q";
+    q.innerHTML='<p class="qt">'+item.q+'</p><button class="reveal">Ver respuesta</button><div class="ans">'+item.a+'</div>';
+    const btn=q.querySelector(".reveal"), ans=q.querySelector(".ans");
+    btn.addEventListener("click",()=>{const open=ans.classList.toggle("show");btn.textContent=open?"Ocultar respuesta":"Ver respuesta";});
+    wrap.appendChild(q);
+  });
+  return wrap;
+}
+function buildCase(id,c){
+  const div=document.createElement("div"); div.className="case"; div.dataset.case=id;
+  const intro=document.createElement("p"); intro.className="case-intro"; intro.innerHTML=c.intro; div.appendChild(intro);
+  c.blocks.forEach(b=>div.appendChild(buildBlock(b)));
+  div.appendChild(buildFinal(c));
+  div.appendChild(buildReflect(c));
+  return div;
+}
+
+/* ---------- Verificación ---------- */
+function norm(s){return (s||"").trim().replace(",",".");}
+function isMatch(inp){
+  if(inp.dataset.locked) return true;
+  const exp=norm(inp.dataset.expected), got=norm(inp.value);
+  if(got==="") return false;
+  if(exp===DASH) return got===DASH||got==="-";
+  return Number(got)===Number(exp);
+}
+function checkScope(scope,verdict){
+  let total=0,ok=0;
+  scope.querySelectorAll("input.v").forEach(inp=>{
+    if(inp.dataset.locked) return; total++;
+    inp.classList.remove("ok","no","sol");
+    if(isMatch(inp)){inp.classList.add("ok");ok++;} else inp.classList.add("no");
+  });
+  verdict.classList.add("show");
+  if(ok===total){verdict.textContent="\u2713 Bloque correcto";verdict.className="verdict show win";}
+  else{verdict.textContent=ok+"/"+total+" \u2014 revisa las celdas en rojo";verdict.className="verdict show part";}
+  updateScore();
+}
+function solveScope(scope,verdict){
+  scope.querySelectorAll("input.v").forEach(inp=>{
+    if(inp.dataset.locked) return;
+    inp.value=inp.dataset.expected; inp.classList.remove("ok","no"); inp.classList.add("sol");
+  });
+  verdict.classList.add("show","part"); verdict.classList.remove("win");
+  verdict.textContent="Soluci\u00f3n mostrada \u2014 borra y vuelve a intentar para practicar";
+  updateScore();
+}
+function updateScore(){
+  const active=document.querySelector(".case.active"); let total=0,ok=0;
+  active.querySelectorAll("input.v").forEach(inp=>{
+    if(inp.dataset.locked) return; total++;
+    if(inp.classList.contains("ok")) ok++;
+  });
+  document.getElementById("score").innerHTML="Correctas: <b>"+ok+"</b> / "+total;
+}
+
+/* ---------- Montaje ---------- */
+["c1","c2"].forEach(id=>root.appendChild(buildCase(id,DATA[id])));
+function showCase(id){
+  document.querySelectorAll(".case").forEach(c=>c.classList.toggle("active",c.dataset.case===id));
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.case===id));
+  clearHot(); updateScore();
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>showCase(t.dataset.case)));
+showCase("c1");
+
+/* plegables */
+const exp=document.getElementById("explain"),eh=document.getElementById("explainHead"),chev=document.getElementById("chev");
+function toggleExplain(){const closed=exp.classList.toggle("closed");eh.setAttribute("aria-expanded",!closed);chev.textContent=closed?"mostrar \u25bc":"ocultar \u25b2";}
+eh.addEventListener("click",toggleExplain);
+eh.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleExplain();}});
+
+const cmp=document.getElementById("compare"),ch=document.getElementById("compareHead"),chevC=document.getElementById("chevC");
+function toggleCompare(){const closed=cmp.classList.toggle("closed");ch.setAttribute("aria-expanded",!closed);chevC.textContent=closed?"mostrar \u25bc":"ocultar \u25b2";}
+ch.addEventListener("click",toggleCompare);
+ch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleCompare();}});
+
+document.getElementById("resetAll").addEventListener("click",()=>{
+  document.querySelectorAll("input.v").forEach(inp=>{if(inp.dataset.locked)return;inp.value="";inp.classList.remove("ok","no","sol");});
+  document.querySelectorAll(".verdict").forEach(v=>{v.className="verdict";v.textContent="";});
+  document.querySelectorAll(".ans").forEach(a=>a.classList.remove("show"));
+  document.querySelectorAll(".reveal").forEach(b=>b.textContent="Ver respuesta");
+  clearHot(); updateScore();
+});
+</script>
+</body>
+</html>
